@@ -26,9 +26,12 @@ jobs:
         echo "IDF_PATH=$GITHUB_WORKSPACE/esp-idf" >> $GITHUB_ENV
         echo "$GITHUB_WORKSPACE/esp-idf/export.sh" >> $GITHUB_ENV
 
+    - name: Set up ESP-IDF environment
+      run: |
+        source $GITHUB_WORKSPACE/esp-idf/export.sh
+
     - name: Build firmware
       run: |
-        . $GITHUB_WORKSPACE/esp-idf/export.sh
         idf.py build
 
     - name: Copy firmware to deployment dir
