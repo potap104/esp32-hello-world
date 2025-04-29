@@ -17,9 +17,9 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Set up ESP-IDF
-      uses: espressif/setup-esp-idf@v1
+      uses: espressif/setup-esp-idf@v2  # Используем последнюю версию Action (v2)
       with:
-        idf_version: 'v4.4'  # Укажите нужную версию ESP-IDF
+        idf_version: 'v4.4'  # Указываем версию ESP-IDF, если нужно
 
     - name: Install dependencies
       run: |
