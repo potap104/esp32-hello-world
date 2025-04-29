@@ -39,10 +39,9 @@ jobs:
         cp build/partition_table/*.bin publish/
 
     - name: Upload firmware as artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: firmware
-        path: |
-          build/*.bin
-          build/bootloader/*.bin
-          build/partition_table/*.bin
+  run: |
+    curl -L -u $GITHUB_ACTOR:$GITHUB_TOKEN \
+      -X POST \
+      -H "Accept: application/vnd.github.v3+json" \
+      -F "file=@build/*.bin" \
+      https://uploads.github.com/repos/${{ github.repository }}/releases/assets?name=firmware.bin
