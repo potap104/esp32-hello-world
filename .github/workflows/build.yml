@@ -33,11 +33,41 @@ jobs:
       run: |
         mkdir -p pages/firmware
         cp build/*.bin build/*.elf build/flasher_args.json pages/firmware/ || true
-        echo "<h1>Firmware</h1><ul>" > pages/index.html
+
+        echo '<h1>Firmware</h1><ul>' > pages/index.html
         for f in pages/firmware/*; do
-          echo "<li><a href=\"${f#pages/}\">$(basename $f)</a></li>" >> pages/index.html
+        echo "<li><a href=\"${f#pages/}\">$(basename $f)</a></li>" >> pages/index.html
         done
-        echo "</ul>" >> pages/index.html
+        echo '</ul>' >> pages/index.html
+
+        # Добавляем кнопку и скрипт для прошивки
+        cat <<EOF >> pages/index.html
+        <h2>Прошить ESP32 из браузера</h2>
+        <button onclick="installFirmware()">🔌 Подключить и прошить</button>
+        <script type="module">
+          import { flash } from 'https://unpkg.com/esptool-js@0.9.1/dist/web/index.min.js';
+
+          async function installFirmware() {
+            try {
+              const port = await navigator.serial.requestPort();
+              await port.open({ baudRate: 115200 });
+
+              const file = await fetch("firmware/firmware.bin").then(r => r.arrayBuffer());
+
+              await flash(port, [
+                {
+                  offset: 0x1000,
+                  data: new Uint8Array(file)
+                }
+              ]);
+              alert("✅ Прошивка завершена!");
+            } catch (e) {
+              alert("❌ Ошибка: " + e.message);
+              console.error(e);
+            }
+          }
+        </script>
+        EOF
         ls -R pages
 
     - name: Deploy to GitHub Pages
