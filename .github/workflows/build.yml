@@ -23,6 +23,10 @@ jobs:
         docker run --rm \
           -v ${{ github.workspace }}:/project \
           -w /project \
+          espressif/idf idf.py set-target esp32c3
+        docker run --rm \
+          -v ${{ github.workspace }}:/project \
+          -w /project \
           espressif/idf idf.py build
 
     - name: Prepare firmware output for Pages
