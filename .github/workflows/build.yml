@@ -29,3 +29,14 @@ jobs:
           build/*.bin
           build/*.elf
           build/flasher_args.json
+
+    - name: Upload to GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v1.0.0
+        files: |
+          build/*.bin
+          build/*.elf
+          build/flasher_args.json
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
