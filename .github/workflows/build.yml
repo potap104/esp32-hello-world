@@ -32,13 +32,75 @@ jobs:
     - name: Prepare firmware output for Pages
       run: |
         mkdir -p pages/firmware
-        cp build/*.bin build/*.elf build/flasher_args.json pages/firmware/ || true
-        echo "<h1>Firmware</h1><ul>" > pages/index.html
-        for f in pages/firmware/*; do
-          echo "<li><a href=\"${f#pages/}\">$(basename $f)</a></li>" >> pages/index.html
-        done
-        echo "</ul>" >> pages/index.html
-        ls -R pages
+
+        # Копируем прошивки
+        cp build/*.bin build/flasher_args.json pages/firmware/ || true
+
+        # Определяем компоненты
+        BOOTLOADER=$(ls build/bootloader/*.bin | head -n 1)
+        PARTITION=$(ls build/partition_table/*.bin | head -n 1)
+        APP=$(ls build/*.bin | grep -vE 'bootloader|partition' | head -n 1)
+
+        cp "$BOOTLOADER" pages/firmware/bootloader.bin
+        cp "$PARTITION" pages/firmware/partition-table.bin
+        cp "$APP" pages/firmware/firmware.bin
+
+        # manifest.json для esp-web-tools
+        cat > pages/firmware/manifest.json <<EOF
+{
+  "name": "ESP32-C3 Firmware",
+  "version": "${GITHUB_REF_NAME}",
+  "builds": [
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        {
+          "path": "firmware/bootloader.bin",
+          "offset": 4096
+        },
+        {
+          "path": "firmware/partition-table.bin",
+          "offset": 32768
+        },
+        {
+          "path": "firmware/firmware.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
+EOF
+
+        # index.html с кнопкой и ссылками
+        cat > pages/index.html <<EOF
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>ESP32 Firmware Installer</title>
+    <script type="module" src="https://unpkg.com/esp-web-tools@10.0.0/dist/web/install-button.js?module"></script>
+  </head>
+  <body>
+    <h1>Прошивка ESP32-C3</h1>
+
+    <p>Нажмите кнопку ниже, чтобы прошить устройство напрямую из браузера:</p>
+    <esp-web-install-button manifest="firmware/manifest.json"></esp-web-install-button>
+
+    <hr />
+
+    <h2>Скачать вручную</h2>
+    <p>Если вы предпочитаете прошивку через <code>esptool.py</code> или другой способ — скачайте нужные файлы ниже:</p>
+    <ul>
+      <li><a href="firmware/bootloader.bin" download>bootloader.bin</a></li>
+      <li><a href="firmware/partition-table.bin" download>partition-table.bin</a></li>
+      <li><a href="firmware/firmware.bin" download>firmware.bin</a></li>
+      <li><a href="firmware/flasher_args.json" download>flasher_args.json</a></li>
+      <li><a href="firmware/manifest.json" download>manifest.json</a></li>
+    </ul>
+  </body>
+</html>
+EOF
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
