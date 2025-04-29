@@ -1,8 +1,12 @@
-name: Build and Deploy ESP32 Firmware
+name: Build ESP-IDF Project
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -10,33 +14,30 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Set up ESP-IDF
+      uses: espressif/setup-esp-idf@v1
       with:
-        python-version: '3.11'
+        idf_version: 'v4.4'  # Укажите нужную версию ESP-IDF
 
-    - name: Install ESP-IDF
+    - name: Install dependencies
       run: |
-        git clone --recursive https://github.com/espressif/esp-idf.git
-        cd esp-idf
-        git checkout v5.1
-        ./install.sh
-        echo "IDF_PATH=$GITHUB_WORKSPACE/esp-idf" >> $GITHUB_ENV
-        echo "$GITHUB_WORKSPACE/esp-idf/export.sh" >> $GITHUB_ENV
+        sudo apt-get update
+        sudo apt-get install -y python3-pip python3-setuptools python3-venv
+        python3 -m pip install --upgrade pip
+        python3 -m pip install -r $IDF_PATH/requirements.txt
 
     - name: Set up ESP-IDF environment
       run: |
-        source $GITHUB_WORKSPACE/esp-idf/export.sh
+        . $IDF_PATH/export.sh
 
-    - name: Build firmware
+    - name: Build the project
       run: |
         idf.py build
 
-    - name: Copy firmware to deployment dir
-      run: |
-        mkdir publish
-        cp build/*.bin publish/
-        cp build/bootloader/*.bin publish/
-        cp build/partition_table/*.bin publish/
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: build/hello-world.bin
