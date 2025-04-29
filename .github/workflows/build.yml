@@ -1,31 +1,44 @@
-name: Build & Release ESP Firmware
+name: Build & Deploy Firmware to GitHub Pages
 
 on:
   push:
     tags:
-      - 'v*'  # Например: v1.0.0, v2.3.4
+      - 'v*'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  build-and-release:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Build with Docker (ESP-IDF)
+    - name: Build firmware with Docker
       run: |
         docker run --rm \
           -v ${{ github.workspace }}:/project \
           -w /project \
           espressif/idf idf.py build
 
-    - name: Upload firmware to GitHub Release
-      uses: softprops/action-gh-release@v2
+    - name: Prepare firmware output
+      run: |
+        mkdir -p pages/firmware
+        cp build/*.bin pages/firmware/
+        cp build/*.elf pages/firmware/
+        cp build/flasher_args.json pages/firmware/
+        echo "<h1>ESP Firmware</h1><ul>" > pages/index.html
+        for f in pages/firmware/*; do
+          echo "<li><a href=\"$f\">$(basename $f)</a></li>" >> pages/index.html
+        done
+        echo "</ul>" >> pages/index.html
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
       with:
-        files: |
-          build/*.bin
-          build/*.elf
-          build/flasher_args.json
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./pages
