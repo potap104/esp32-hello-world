@@ -1,9 +1,7 @@
-name: ESP32 Build
+name: Build and Deploy ESP32 Firmware
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
     branches: [ main ]
 
 jobs:
@@ -33,8 +31,26 @@ jobs:
         . $GITHUB_WORKSPACE/esp-idf/export.sh
         idf.py build
 
-    - name: Upload firmware
+    - name: Copy firmware to deployment dir
+      run: |
+        mkdir publish
+        cp build/*.bin publish/
+        cp build/bootloader/*.bin publish/
+        cp build/partition_table/*.bin publish/
+
+    - name: Upload firmware as artifact
       uses: actions/upload-artifact@v3
       with:
         name: firmware
-        path: build/*.bin
+        path: |
+          build/*.bin
+          build/bootloader/*.bin
+          build/partition_table/*.bin
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./publish
+        publish_branch: gh-pages
+        force_orphan: true
