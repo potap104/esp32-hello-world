@@ -1,12 +1,10 @@
-name: Build ESP-IDF Project
+name: ESP-IDF Build
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
@@ -14,30 +12,11 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
-    - name: Set up ESP-IDF
-      uses: espressif/setup-esp-idf@v2  # Используем последнюю версию Action (v2)
-      with:
-        idf_version: 'v4.4'  # Указываем версию ESP-IDF, если нужно
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
 
-    - name: Install dependencies
+    - name: Build with ESP-IDF Docker image
       run: |
-        sudo apt-get update
-        sudo apt-get install -y python3-pip python3-setuptools python3-venv
-        python3 -m pip install --upgrade pip
-        python3 -m pip install -r $IDF_PATH/requirements.txt
-
-    - name: Set up ESP-IDF environment
-      run: |
-        . $IDF_PATH/export.sh
-
-    - name: Build the project
-      run: |
-        idf.py build
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: firmware
-        path: build/hello-world.bin
+        docker run --rm -v ${{ github.workspace }}:/project -w /project espressif/idf idf.py build
