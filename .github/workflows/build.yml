@@ -39,7 +39,7 @@ jobs:
         cp build/partition_table/*.bin publish/
 
     - name: Upload firmware as artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2
       with:
         name: firmware
         path: |
