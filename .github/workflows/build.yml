@@ -1,4 +1,4 @@
-name: Build & Deploy Firmware to GitHub Pages
+name: Build & Deploy to GitHub Pages
 
 on:
   push:
@@ -18,24 +18,23 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Build firmware with Docker
+    - name: Build firmware
       run: |
         docker run --rm \
           -v ${{ github.workspace }}:/project \
           -w /project \
           espressif/idf idf.py build
 
-    - name: Prepare firmware output
+    - name: Prepare firmware output for Pages
       run: |
         mkdir -p pages/firmware
-        cp build/*.bin pages/firmware/
-        cp build/*.elf pages/firmware/
-        cp build/flasher_args.json pages/firmware/
-        echo "<h1>ESP Firmware</h1><ul>" > pages/index.html
+        cp build/*.bin build/*.elf build/flasher_args.json pages/firmware/ || true
+        echo "<h1>Firmware</h1><ul>" > pages/index.html
         for f in pages/firmware/*; do
-          echo "<li><a href=\"$f\">$(basename $f)</a></li>" >> pages/index.html
+          echo "<li><a href=\"${f#pages/}\">$(basename $f)</a></li>" >> pages/index.html
         done
         echo "</ul>" >> pages/index.html
+        ls -R pages
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
