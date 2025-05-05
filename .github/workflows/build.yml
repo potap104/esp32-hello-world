@@ -32,9 +32,14 @@ jobs:
       - name: Prepare firmware output for Pages
         run: |
           mkdir -p pages/firmware
+
+          # Копируем все .bin
           cp build/*.bin pages/firmware/ || true
+
+          # Получаем имя основного бинарника (можно настроить вручную)
           FIRMWARE_BIN=$(basename $(ls pages/firmware/*.bin | head -n 1))
 
+          # manifest.json
           cat <<EOF > pages/manifest.json
           {
             "name": "ESP32 Hello World",
@@ -52,9 +57,10 @@ jobs:
           }
           EOF
 
+          # index.html с кнопкой и ссылками
           cat <<EOF > pages/index.html
           <!DOCTYPE html>
-          <html lang="en">
+          <html lang="ru">
           <head>
             <meta charset="UTF-8">
             <title>ESP32 Hello World Flasher</title>
@@ -63,6 +69,17 @@ jobs:
           <body>
             <h1>Прошивка ESP32 через браузер</h1>
             <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
+
+            <h2>Или скачайте прошивку вручную:</h2>
+            <ul>
+          EOF
+
+          for f in pages/firmware/*.bin; do
+            echo "  <li><a href=\"${f#pages/}\">$(basename "$f")</a></li>" >> pages/index.html
+          done
+
+          cat <<EOF >> pages/index.html
+            </ul>
           </body>
           </html>
           EOF
