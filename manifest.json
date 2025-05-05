@@ -1,0 +1,14 @@
+{
+  "name": "ESP32 Hello World",
+  "builds": [
+    {
+      "chipFamily": "ESP32C3",
+      "parts": [
+        {
+          "path": "firmware/bluedroid_gatt_server.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}

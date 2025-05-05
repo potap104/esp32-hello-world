@@ -1,30 +1,12 @@
-<h1>Firmware</h1><ul>
-<li><a href="firmware/bluedroid_gatt_server.bin">bluedroid_gatt_server.bin</a></li>
-<li><a href="firmware/bluedroid_gatt_server.elf">bluedroid_gatt_server.elf</a></li>
-<li><a href="firmware/flasher_args.json">flasher_args.json</a></li>
-</ul>
-<h2>Прошить ESP32 из браузера</h2>
-<button onclick="installFirmware()">🔌 Подключить и прошить</button>
-<script type="module">
-  import { flash } from 'https://unpkg.com/esptool-js@0.9.1/dist/web/index.min.js';
-
-  async function installFirmware() {
-    try {
-      const port = await navigator.serial.requestPort();
-      await port.open({ baudRate: 115200 });
-
-      const file = await fetch("firmware/firmware.bin").then(r => r.arrayBuffer());
-
-      await flash(port, [
-        {
-          offset: 0x1000,
-          data: new Uint8Array(file)
-        }
-      ]);
-      alert("✅ Прошивка завершена!");
-    } catch (e) {
-      alert("❌ Ошибка: " + e.message);
-      console.error(e);
-    }
-  }
-</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ESP32 Hello World Flasher</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@8.0.6/dist/web/install-button.js"></script>
+</head>
+<body>
+  <h1>Прошивка ESP32 через браузер</h1>
+  <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
+</body>
+</html>
