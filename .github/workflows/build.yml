@@ -15,33 +15,60 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Build firmware
-      run: |
-        docker run --rm \
-          -v ${{ github.workspace }}:/project \
-          -w /project \
-          espressif/idf idf.py set-target esp32c3
-        docker run --rm \
-          -v ${{ github.workspace }}:/project \
-          -w /project \
-          espressif/idf idf.py build
+      - name: Build firmware
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/project \
+            -w /project \
+            espressif/idf idf.py set-target esp32c3
+          docker run --rm \
+            -v ${{ github.workspace }}:/project \
+            -w /project \
+            espressif/idf idf.py build
 
-    - name: Prepare firmware output for Pages
-      run: |
-        mkdir -p pages/firmware
-        cp build/*.bin build/*.elf build/flasher_args.json pages/firmware/ || true
-        echo "<h1>Firmware</h1><ul>" > pages/index.html
-        for f in pages/firmware/*; do
-          echo "<li><a href=\"${f#pages/}\">$(basename $f)</a></li>" >> pages/index.html
-        done
-        echo "</ul>" >> pages/index.html
-        ls -R pages
+      - name: Prepare firmware output for Pages
+        run: |
+          mkdir -p pages/firmware
+          cp build/*.bin pages/firmware/ || true
+          FIRMWARE_BIN=$(basename $(ls pages/firmware/*.bin | head -n 1))
 
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./pages
+          cat <<EOF > pages/manifest.json
+          {
+            "name": "ESP32 Hello World",
+            "builds": [
+              {
+                "chipFamily": "ESP32C3",
+                "parts": [
+                  {
+                    "path": "firmware/$FIRMWARE_BIN",
+                    "offset": 0
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+
+          cat <<EOF > pages/index.html
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <title>ESP32 Hello World Flasher</title>
+            <script type="module" src="https://unpkg.com/esp-web-tools@8.0.6/dist/web/install-button.js"></script>
+          </head>
+          <body>
+            <h1>Прошивка ESP32 через браузер</h1>
+            <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
+          </body>
+          </html>
+          EOF
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./pages
